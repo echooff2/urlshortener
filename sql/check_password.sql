@@ -1,0 +1,1 @@
+SELECT "id", "password" FROM public."user" WHERE "password" = $1 LIMIT 1;
