@@ -1,4 +1,4 @@
-CREATE USER url_shortener WITH PASSWORD 'your password';
+CREATE USER url_shortener WITH PASSWORD 'password';
 
 CREATE OR REPLACE FUNCTION public.random_name(IN length integer)
     RETURNS character varying

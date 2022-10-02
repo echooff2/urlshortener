@@ -1,4 +1,4 @@
-use actix_web::post;
+use actix_web::{post, HttpRequest};
 
 use crate::{
     models::{redirect::Redirect, shorten_payload::ShortenPayload, user::User},
@@ -12,6 +12,7 @@ use tokio_pg_mapper::FromTokioPostgresRow;
 
 #[post("/shorten")]
 pub async fn shorten(
+    request: HttpRequest,
     shorten_payload: web::Form<ShortenPayload>,
     tmpl: web::Data<Tera>,
     db_pool: web::Data<Pool>,
@@ -60,8 +61,9 @@ pub async fn shorten(
 
     let result = Redirect::from_row_ref(result.unwrap()).unwrap();
 
+    let conn_info = request.connection_info();
     let mut ctx = tera::Context::new();
-    ctx.insert("url", &format!("http://localhost:3030/{}", result.name));
+    ctx.insert("url", &format!("{}://{}/{}", conn_info.scheme(), conn_info.host(), result.name));
 
     let body = tmpl.render("success.html", &ctx).map_err(|err| {
         error!("template error: {:?}", err);
