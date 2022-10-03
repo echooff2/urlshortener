@@ -73,7 +73,7 @@ pub async fn shorten(
 
     let result = result.get(0);
 
-    if let None = result.as_ref() {
+    if result.is_none() {
         error!(
             "database insert error, database didn't return error but didn't insert value either"
         );

@@ -32,7 +32,7 @@ pub async fn router(
 
     let result = result.get(0);
 
-    if let None = result.as_ref() {
+    if result.is_none() {
         info!("no url for name {}", route);
         return Ok(Either::Left(
             NamedFile::open_async("public/404.html")
