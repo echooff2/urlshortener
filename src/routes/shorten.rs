@@ -1,4 +1,5 @@
 use actix_web::{post, HttpRequest};
+use tokio_postgres::types::ToSql;
 
 use crate::{
     models::{redirect::Redirect, shorten_payload::ShortenPayload, user::User},
@@ -56,12 +57,24 @@ pub async fn shorten(
         shorten_payload.password, url.to_string()
     );
 
-    let query = include_str!("../../sql/add_redirect.sql");
+    let use_custom = shorten_payload.name.as_ref().map_or(false, |s| !s.trim().is_empty());
+
+    let query = if use_custom {
+        include_str!("../../sql/add_custom_redirect.sql")
+    }
+    else {
+        include_str!("../../sql/add_redirect.sql")
+    };
     let query = query.replace("$table_fields", &Redirect::sql_table_fields());
     let query = client.prepare(&query).await.unwrap();
 
+    let first_arg: Box<(dyn ToSql + Sync)> = if use_custom { 
+        let tmp = shorten_payload.name.as_ref().unwrap();
+        Box::new(tmp.clone())
+    } else { Box::new(LETTER_COUNT) };
+
     let result = client
-        .query(&query, &[&LETTER_COUNT, &url.to_string()])
+        .query(&query, &[&*first_arg, &url.to_string()])
         .await
         .map_err(|err| {
             error!(
